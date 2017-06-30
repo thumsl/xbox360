@@ -19,6 +19,8 @@
 #define SERVO_MAX_OFFSET 10
 #define LED_MAX 80
 
+#define I2C_BUS "/dev/i2c-1"
+
 struct control_params_t {
   int led_status;
   float motor_speed;
