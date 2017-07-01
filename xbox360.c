@@ -5,7 +5,7 @@ void failsafe(GAMEPAD_DEVICE dev)
 {
   struct timespec ts, ts2;
   ts.tv_sec = 0;
-  ts.tv_nsec = 1000000L;
+  ts.tv_nsec = 10000000L;
 
   while (1) {
     GamepadUpdate();
@@ -21,7 +21,7 @@ void manual_control(GAMEPAD_DEVICE dev)
 {
   struct timespec ts, ts2;
   ts.tv_sec = 0;
-  ts.tv_nsec = 1000000L;
+  ts.tv_nsec = 10000000L;
 
   while (1) {
     GamepadUpdate();
@@ -38,10 +38,13 @@ void manual_control(GAMEPAD_DEVICE dev)
       
       float y_val;
       GamepadStickNormXY(dev, STEERING, &params.servo_angle, &y_val);
-
-      apply_params();
+    }
+    else {
+      params.motor_speed = 0;
+      params.servo_angle = 0;
     }
 
+    apply_params();
     nanosleep(&ts, &ts2);
   }
 }
