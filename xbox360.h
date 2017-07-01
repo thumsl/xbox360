@@ -17,7 +17,7 @@
 #define SERVO_CENTER 50
 #define MOTOR_MAX_OFFSET 45
 #define SERVO_MAX_OFFSET 10
-#define LED_MAX 80
+#define LED_MAX 100
 
 #define I2C_BUS "/dev/i2c-1"
 
