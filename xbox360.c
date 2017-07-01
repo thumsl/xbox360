@@ -52,7 +52,7 @@ void manual_control(GAMEPAD_DEVICE dev)
 void apply_params()
 {
   PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, MOTOR_CENTER + params.motor_speed * MOTOR_MAX_OFFSET);
-  PCA9685_setDutyCicle(bus, SERVO_CHANNEL, SERVO_CENTER + params.servo_angle * SERVO_MAX_OFFSET);
+  PCA9685_setDutyCicle(bus, SERVO_CHANNEL, SERVO_CENTER - params.servo_angle * SERVO_MAX_OFFSET);
   PCA9685_setDutyCicle(bus, LED_CHANNEL, LED_MAX * params.led_status);
 
   params.led_status == 0 ? printf("* LED OFF\n") : printf("* LED ON\n"); 

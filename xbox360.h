@@ -15,7 +15,7 @@
 
 #define MOTOR_CENTER 50
 #define SERVO_CENTER 50
-#define MOTOR_MAX_OFFSET 25
+#define MOTOR_MAX_OFFSET 45
 #define SERVO_MAX_OFFSET 10
 #define LED_MAX 80
 
