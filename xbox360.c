@@ -3,19 +3,26 @@
 
 void failsafe(GAMEPAD_DEVICE dev)
 {
+  struct timespec ts, ts2;
+  ts.tv_sec = 0;
+  ts.tv_nsec = 1000000L;
+
   while (1) {
     GamepadUpdate();
-    printf("failsafe\n");
-    if (GamepadIsConnected(dev)) {
-      printf("is connected!\n");
+    if (GamepadIsConnected(dev))
       if (GamepadButtonTriggered(dev, KILL_SWITCH))
         manual_control(dev); // TODO: find a better name 
-    }
+
+    nanosleep(&ts, &ts2);
   }
 }
 
 void manual_control(GAMEPAD_DEVICE dev)
 {
+  struct timespec ts, ts2;
+  ts.tv_sec = 0;
+  ts.tv_nsec = 1000000L;
+
   while (1) {
     GamepadUpdate();
     if (GamepadIsConnected(dev)) {
@@ -34,6 +41,8 @@ void manual_control(GAMEPAD_DEVICE dev)
 
       apply_params();
     }
+
+    nanosleep(&ts, &ts2);
   }
 }
 
