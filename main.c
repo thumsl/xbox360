@@ -3,7 +3,7 @@
 int main() {
   bus = i2c_open(I2C_BUS);
   
-  PCA9685_setFreq(bus, 300);
+  PCA9685_setFreq(bus, 320);
   PCA9685_init(bus);
 
   PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, 50);
