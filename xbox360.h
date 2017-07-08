@@ -19,7 +19,12 @@
 #define SERVO_MAX_OFFSET 10
 #define LED_MAX 100
 
+#define MANUAL 0
+#define ENCODED 1
+
 #define I2C_BUS "/dev/i2c-1"
+
+#define USAGE_STRING "seu cretino, executou errado, porra!\n"
 
 struct control_params_t {
   int led_status;
@@ -29,7 +34,9 @@ struct control_params_t {
 
 i2c bus;
 struct control_params_t params;
+char operation;
 
 void failsafe(GAMEPAD_DEVICE dev);
 void manual_control(GAMEPAD_DEVICE dev);
 void apply_params();
+void save_params(char *file);

@@ -1,6 +1,15 @@
 #include "xbox360.h"
+#include "err.h"
 
-int main() {
+int main(int argc, char** args) {
+	if (argc < 2)
+		err(EXIT_FAILURE, USAGE_STRING);
+
+	if (operation == MANUAL || operation == ENCODED)
+		operation = atoi(args[1]);
+	else 
+		err(EXIT_FAILURE, USAGE_STRING);
+		
   bus = i2c_open(I2C_BUS);
   
   PCA9685_setFreq(bus, 320);

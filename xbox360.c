@@ -11,7 +11,10 @@ void failsafe(GAMEPAD_DEVICE dev)
     GamepadUpdate();
     if (GamepadIsConnected(dev))
       if (GamepadButtonTriggered(dev, KILL_SWITCH))
-        manual_control(dev); // TODO: find a better name 
+	if (operation == MANUAL)
+        	manual_control(dev); // TODO: find a better name 
+	else if (operation == ENCODED);
+		auto_control();
 
     nanosleep(&ts, &ts2);
   }
@@ -58,4 +61,8 @@ void apply_params()
   params.led_status == 0 ? printf("* LED OFF\n") : printf("* LED ON\n"); 
   printf("* Motor PWM %f%\n", params.motor_speed * 100);
   printf("* Servo PWM %f%\n", params.servo_angle * 100);
+}
+
+void save_params(char *file) {
+	
 }
