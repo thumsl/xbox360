@@ -39,6 +39,7 @@ struct timespec delay;
 
 void failsafe(GAMEPAD_DEVICE dev);
 void manual_control(GAMEPAD_DEVICE dev);
-void load_params(char* filename);
+struct control_params_t* load_params(char* filename);
+void auto_control(struct control_params_t* params);
 void apply_params();
 void save_params(char *file);
