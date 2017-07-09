@@ -2,9 +2,9 @@
 #include <stdbool.h>
 #include "xbox360.h"
 #include "stdio.h"
+#include "TCS3472/tcs3472.h"
 
-volatile static bool running;
-volatile static bool add_to_buffer;
+volatile static bool running, add_to_buffer, rgb_is_running;
 
 void timespec_diff(struct timespec *start, struct timespec *stop, struct timespec *result)
 {
@@ -121,6 +121,7 @@ void auto_control(struct auto_params_t* autoDef) {
 	struct timespec ts1;
 
 	int i;
+	/*TODO: init. rgb_is_running*/
 	for (i = 0; i < autoDef->n; i++) {
 		clock_gettime(CLOCK_BOOTTIME, &ts1);
 
@@ -150,9 +151,40 @@ void apply_params(struct control_params_t P)
 		PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, MOTOR_CENTER);;
 
 	PCA9685_setDutyCicle(bus, SERVO_CHANNEL, SERVO_CENTER - P.servo_angle * SERVO_MAX_OFFSET);
-	PCA9685_setDutyCicle(bus, LED_CHANNEL, LED_MAX * P.led_status);
+//	PCA9685_setDutyCicle(bus, LED_CHANNEL, LED_MAX * P.led_status);
+
+	if(P.led_status) {
+		rgb_is_running = true;
+	} else {
+		rgb_is_running = false;
+	}
 
 /*	P.led_status == 0 ? printf("* LED OFF\n") : printf("* LED ON\n"); 
 	printf("* Motor PWM %f%\n", P.motor_speed * 100);
 	printf("* Servo PWM %f%\n", P.servo_angle * 100); */
+}
+
+void *rgb_thread(void *args)
+{
+	struct timespec ts;
+	color currentColor;
+
+	ts.tv_sec = 0;
+	ts.tv_nsec += interval;
+
+	TCS3472_setIntegrationTime(bus, TCS3472_ATIME_24MS);
+	TCS3472_powerOn(bus);
+
+	/*TODO: define better loop cond*/
+	while(true) {
+		while(!rgb_is_running) clock_nanosleep(CLOCK_BOOTTIME, 0, &ts, NULL);
+
+		do {
+			TCS3472_getColor(bus, &currentColor);
+		} while(currentColor.red < WHITE_TRESHOLD
+				&& currentColor.green < WHITE_TRESHOLD
+				&& currentColor.blue < WHITE_TRESHOLD);
+
+		PCA9685_setDutyCicle(bus, LED_CHANNEL, LED_MAX);
+	}
 }
