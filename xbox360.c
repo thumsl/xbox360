@@ -23,7 +23,7 @@ void failsafe(GAMEPAD_DEVICE dev)
 					auto_control(read_from_file(auto_params, "file.txt"), auto_params);
 				}
 
-	nanosleep(&delay, NULL);
+		nanosleep(&delay, NULL);
 	}
 }
 
@@ -38,34 +38,61 @@ void manual_control(GAMEPAD_DEVICE dev)
 	current_params.motor_speed = 0;
 	current_params.servo_angle = 0;
 
+	struct timespec ts1, ts2;
 	while (running) {
+		clock_gettime(CLOCK_MONOTONIC, &ts1);
+
 		GamepadUpdate();
-			if (GamepadIsConnected(dev)) {
-				if (GamepadButtonTriggered(dev, LED_SWITCH)) {
-					if (current_params.led_status == 0)
-						current_params.led_status = 1;
-					else
-					  current_params.led_status = 0;
-				}
-
-				current_params.motor_speed =
-				GamepadTriggerLength(dev, THROTTLE) - GamepadTriggerLength(dev, REVERSE);
-
-				float y_val;
-				GamepadStickNormXY(dev, STEERING, &current_params.servo_angle, &y_val);
+		if (GamepadIsConnected(dev)) {
+			if (GamepadButtonTriggered(dev, LED_SWITCH)) {
+				if (current_params.led_status == 0)
+					current_params.led_status = 1;
+				else
+				  current_params.led_status = 0;
 			}
-			else {
-				current_params.motor_speed = 0;
-				current_params.servo_angle = 0;
-			}
+
+			current_params.motor_speed =
+			GamepadTriggerLength(dev, THROTTLE) - GamepadTriggerLength(dev, REVERSE);
+
+			float y_val;
+			GamepadStickNormXY(dev, STEERING, &current_params.servo_angle, &y_val);
+		}
+		else {
+			current_params.motor_speed = 0;
+			current_params.servo_angle = 0;
+		}
 
 		apply_params(current_params);
 
-		nanosleep(&delay, NULL);
+		clock_gettime(CLOCK_MONOTONIC, &ts2);
+		long delta = (ts2.tv_sec * 1000000000L + ts2.tv_nsec) - 
+			(ts1.tv_sec * 1000000000L + ts1.tv_nsec);
+
+		long interval = delay.tv_sec * 1000000000L + delay.tv_nsec;
+
+		if (interval > delta)
+			nanosleep(interval - delta, NULL); // TODO: timespec
 	}
 }
 
-void auto_control(struct auto_params_t* params, int size) {
+void auto_control(struct auto_params_t* params) {
+	struct timespec ts1, ts2;
+
+	int i;
+	for (i = 0; i < params->size; i++) {
+		clock_gettime(CLOCK_MONOTONIC, &ts1);
+
+		apply_params(params[i]);
+
+		clock_gettime(CLOCK_MONOTONIC, &ts2);
+		long delta = (ts2.tv_sec * 1000000000L + ts2.tv_nsec) - 
+			(ts1.tv_sec * 1000000000L + ts1.tv_nsec);
+
+		long interval = delay.tv_sec * 1000000000L + delay.tv_nsec;
+
+		if (interval > delta)
+			nanosleep(interval - delta, NULL); // TODO: timespec
+	}
 }
 
 void apply_params(struct control_params_t P)
@@ -77,7 +104,4 @@ void apply_params(struct control_params_t P)
 	P.led_status == 0 ? printf("* LED OFF\n") : printf("* LED ON\n"); 
 	printf("* Motor PWM %f%\n", P.motor_speed * 100);
 	printf("* Servo PWM %f%\n", P.servo_angle * 100);
-}
-
-void save_params(char *file) {
 }
