@@ -33,10 +33,12 @@ struct control_params_t {
 };
 
 i2c bus;
-struct control_params_t params;
+struct control_params_t* params;
 char operation;
+struct timespec delay;
 
 void failsafe(GAMEPAD_DEVICE dev);
 void manual_control(GAMEPAD_DEVICE dev);
+void load_params(char* filename);
 void apply_params();
 void save_params(char *file);

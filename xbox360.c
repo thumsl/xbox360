@@ -1,12 +1,17 @@
+#include <signal.h>
+#include <bool.h>
 #include "xbox360.h"
 #include "stdio.h"
 
+volatile static bool running;
+
+static void signal_handler(int signum)
+{
+  running = false;
+}
+
 void failsafe(GAMEPAD_DEVICE dev)
 {
-  struct timespec ts, ts2;
-  ts.tv_sec = 0;
-  ts.tv_nsec = 10000000L;
-
   while (1) {
     GamepadUpdate();
     if (GamepadIsConnected(dev))
@@ -16,17 +21,16 @@ void failsafe(GAMEPAD_DEVICE dev)
 	else if (operation == ENCODED);
 		auto_control();
 
-    nanosleep(&ts, &ts2);
+    nanosleep(&delay, NULL);
   }
 }
 
 void manual_control(GAMEPAD_DEVICE dev)
 {
-  struct timespec ts, ts2;
-  ts.tv_sec = 0;
-  ts.tv_nsec = 10000000L;
+  running = true;
+  signal(SIGINT, signal_handler);
 
-  while (1) {
+  while (running) {
     GamepadUpdate();
     if (GamepadIsConnected(dev)) {
       if (GamepadButtonTriggered(dev, LED_SWITCH)) {
@@ -48,8 +52,12 @@ void manual_control(GAMEPAD_DEVICE dev)
     }
 
     apply_params();
-    nanosleep(&ts, &ts2);
+
+    nanosleep(&delay, NULL);
   }
+}
+
+void auto_control(char* filename) {
 }
 
 void apply_params()
