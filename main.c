@@ -27,13 +27,7 @@ int main(int argc, char** args) {
   PCA9685_setDutyCicle(bus, SERVO_CHANNEL, 50);
   PCA9685_setDutyCicle(bus, LED_CHANNEL, 50);
 
-  params = (control_params_t*)malloc(sizeof(control_params_t) * MAX_SIZE);
-
-  params[0].led_status = 0;
-  params[0].motor_speed = 0;
-  params[0].servo_angle = 0;
-
-  GamepadInit();
+    GamepadInit();
 
   failsafe(CONTROLLER);
 

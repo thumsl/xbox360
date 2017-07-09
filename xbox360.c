@@ -31,6 +31,10 @@ void manual_control(GAMEPAD_DEVICE dev)
   signal(SIGINT, signal_handler);
 
   struct control_params_t current_params;
+  
+  current_params.led_status = 0;
+  current_params.motor_speed = 0;
+  current_params.servo_angle = 0;
 
   while (running) {
     GamepadUpdate();
