@@ -58,7 +58,7 @@ int write_to_file(struct control_params_t *params, size_t size, double period, c
 	int fd;
 	struct auto_params_t *apt;
 
-	fd = open(file, O_RDWR|O_CREAT|O_EXCL, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
+	fd = open(file, O_RDWR|O_CREAT, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 
 	if(fd < 0) {
 		perror("write_to_file");

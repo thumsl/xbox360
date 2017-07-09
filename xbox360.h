@@ -12,6 +12,7 @@
 #define MANUAL_CONTROL BUTTON_A
 #define ENCODE_WRITE BUTTON_B
 #define ENCODE_READ BUTTON_X
+#define STOP_BUTTON BUTTON_Y 
 
 #define SERVO_CHANNEL 0
 #define MOTOR_CHANNEL 1
@@ -34,7 +35,7 @@ i2c bus;
 struct control_params_t* params;
 char* filename;
 char operation;
-short interval;
+long interval;
 struct timespec delay;
 
 void failsafe(GAMEPAD_DEVICE dev);

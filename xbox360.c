@@ -6,6 +6,19 @@
 volatile static bool running;
 volatile static bool add_to_buffer;
 
+void timespec_diff(struct timespec *start, struct timespec *stop, struct timespec *result)
+{
+    if ((stop->tv_nsec - start->tv_nsec) < 0) {
+        result->tv_sec = stop->tv_sec - start->tv_sec - 1;
+        result->tv_nsec = stop->tv_nsec - start->tv_nsec + 1000000000;
+    } else {
+        result->tv_sec = stop->tv_sec - start->tv_sec;
+        result->tv_nsec = stop->tv_nsec - start->tv_nsec;
+    }   
+
+    return;
+}
+
 static void signal_handler(int signum)
 {
 	running = false;
@@ -30,8 +43,12 @@ void failsafe(GAMEPAD_DEVICE dev)
 			}
 			else if (GamepadButtonTriggered(dev, ENCODE_WRITE)) {
 				add_to_buffer = true;
-				params = (struct control_params_t*)malloc(sizeof(struct control_params_t)*1024);
+				params = (struct control_params_t*)malloc(sizeof(struct control_params_t)*SAMPLE_NUM);
+				if (params == NULL)
+					err(EXIT_FAILURE, "Malloc failed\n");
 				int size = manual_control(dev);
+				printf("Write finished with %d samples.\n", size); 
+
 				write_to_file(params, size, interval, filename);
 			}
 		}
@@ -49,14 +66,18 @@ int manual_control(GAMEPAD_DEVICE dev)
 	current_params.motor_speed = 0;
 	current_params.servo_angle = 0;
 
-	struct timespec ts1, ts2;
+	struct timespec ts1;
 	int i;
 
 	for (i = 0; running; i++) {
-		clock_gettime(CLOCK_MONOTONIC, &ts1);
+		clock_gettime(CLOCK_BOOTTIME, &ts1);
 
 		GamepadUpdate();
 		if (GamepadIsConnected(dev)) {
+			if (GamepadButtonTriggered(dev, STOP_BUTTON)) {
+				running = false;
+				continue;
+			}
 			if (GamepadButtonTriggered(dev, LED_SWITCH)) {
 				if (current_params.led_status == 0)
 					current_params.led_status = 1;
@@ -83,51 +104,55 @@ int manual_control(GAMEPAD_DEVICE dev)
 			params[i].servo_angle = current_params.servo_angle;
 		}
 
-		clock_gettime(CLOCK_MONOTONIC, &ts2);
-		long delta = (ts2.tv_sec * 1000000000L + ts2.tv_nsec) - 
-			(ts1.tv_sec * 1000000000L + ts1.tv_nsec);
-
-		if (interval > delta) {
-			ts1.tv_sec = 0;
-			ts1.tv_nsec = interval * 1000000L - delta;
-			nanosleep(&ts1, NULL); // TODO: timespec
+		ts1.tv_nsec += interval;
+		
+		while (ts1.tv_nsec >= 1e9) {
+			ts1.tv_nsec -= 1e9;
+			ts1.tv_sec++;
 		}
+		
+		clock_nanosleep(CLOCK_BOOTTIME, TIMER_ABSTIME, &ts1, NULL);
 	}
 
 	return i;
 }
 
 void auto_control(struct auto_params_t* autoDef) {
-	struct timespec ts1, ts2;
+	struct timespec ts1;
 
 	int i;
 	for (i = 0; i < autoDef->n; i++) {
-		clock_gettime(CLOCK_MONOTONIC, &ts1);
+		clock_gettime(CLOCK_BOOTTIME, &ts1);
 
 		/* DOES THE MAGIC */
 		apply_params(autoDef->params[i]);
 
-		clock_gettime(CLOCK_MONOTONIC, &ts2);
-		long delta = (ts2.tv_sec * 1000000000L + ts2.tv_nsec) - 
-			(ts1.tv_sec * 1000000000L + ts1.tv_nsec);
-
-		long interval = delay.tv_sec * 1000000000L + delay.tv_nsec;
-
-		if (interval > delta) {
-			ts1.tv_sec = 0;
-			ts1.tv_nsec = interval * 1000000L - delta;
-			nanosleep(&ts1, NULL); // TODO: timespec
+		ts1.tv_nsec += interval;
+		
+		while (ts1.tv_nsec >= 1e9) {
+			ts1.tv_nsec -= 1e9;
+			ts1.tv_sec++;
 		}
+		
+		clock_nanosleep(CLOCK_BOOTTIME, TIMER_ABSTIME, &ts1, NULL);
 	}
 }
 
 void apply_params(struct control_params_t P)
 {
-	PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, MOTOR_CENTER + P.motor_speed * MOTOR_MAX_OFFSET);
+	// PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, MOTOR_CENTER + P.motor_speed * MOTOR_MAX_OFFSET);
+
+	if (P.motor_speed > 0)
+		PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, MOTOR_OFFSET);
+	else if (P.motor_speed < 0)
+		PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, -MOTOR_OFFSET);
+	else
+		PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, MOTOR_CENTER);;
+
 	PCA9685_setDutyCicle(bus, SERVO_CHANNEL, SERVO_CENTER - P.servo_angle * SERVO_MAX_OFFSET);
 	PCA9685_setDutyCicle(bus, LED_CHANNEL, LED_MAX * P.led_status);
 
-	P.led_status == 0 ? printf("* LED OFF\n") : printf("* LED ON\n"); 
+/*	P.led_status == 0 ? printf("* LED OFF\n") : printf("* LED ON\n"); 
 	printf("* Motor PWM %f%\n", P.motor_speed * 100);
-	printf("* Servo PWM %f%\n", P.servo_angle * 100);
+	printf("* Servo PWM %f%\n", P.servo_angle * 100); */
 }

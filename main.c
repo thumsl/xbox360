@@ -7,6 +7,7 @@ int main(int argc, char** args)
 		err(EXIT_FAILURE, USAGE_STRING);
 
 	interval = atoi(args[1]) * 1000000L; // Received interval in ms to ns
+	fprintf(stderr, "period %ld\n", interval);
 	filename = args[2];
 	
 	bus = i2c_open(I2C_BUS);
