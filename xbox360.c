@@ -77,9 +77,11 @@ int manual_control(GAMEPAD_DEVICE dev)
 
 		apply_params(current_params);
 
-		params[i].led_status = current_params.led_status;
-		params[i].motor_speed = current_params.motor_speed;
-		params[i].servo_angle = current_params.servo_angle;
+		if (add_to_buffer) {
+			params[i].led_status = current_params.led_status;
+			params[i].motor_speed = current_params.motor_speed;
+			params[i].servo_angle = current_params.servo_angle;
+		}
 
 		clock_gettime(CLOCK_MONOTONIC, &ts2);
 		long delta = (ts2.tv_sec * 1000000000L + ts2.tv_nsec) - 
