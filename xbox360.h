@@ -27,9 +27,9 @@
 #define USAGE_STRING "seu cretino, executou errado, porra!\n" // TODO: change
 
 struct control_params_t {
-  int led_status;
-  float motor_speed;
-  float servo_angle;
+	int led_status;
+	float motor_speed;
+	float servo_angle;
 };
 
 i2c bus;
