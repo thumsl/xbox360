@@ -4,6 +4,7 @@
 #include "stdio.h"
 
 volatile static bool running;
+volatile static bool add_to_buffer;
 
 static void signal_handler(int signum)
 {
@@ -12,22 +13,32 @@ static void signal_handler(int signum)
 
 void failsafe(GAMEPAD_DEVICE dev)
 {
+	struct control_params_t P;
+	P.motor_speed = P.servo_angle = P.led_status = 0;
+	apply_params(P);
+
 	while (1) {
 		GamepadUpdate();
-		if (GamepadIsConnected(dev))
-			if (GamepadButtonTriggered(dev, KILL_SWITCH))
-				if (operation == MANUAL)
-					manual_control(dev); // TODO: find a better name 
-				else if (operation == ENCODED) {
-					// struct auto_params*;
-					auto_control(read_from_file(auto_params, "file.txt"), auto_params);
-				}
-
-		nanosleep(&delay, NULL);
+		if (GamepadIsConnected(dev)) {
+			if (GamepadButtonTriggered(dev, MANUAL_CONTROL)) {
+				add_to_buffer = false;
+				manual_control(dev);
+			}
+			if (GamepadButtonTriggered(dev, ENCODE_READ)) {
+				struct auto_params_t* apt = read_from_file(filename);
+				auto_control(apt);
+			}
+			else if (GamepadButtonTriggered(dev, ENCODE_WRITE)) {
+				add_to_buffer = true;
+				params = (struct control_params_t*)malloc(sizeof(struct control_params_t)*1024);
+				int size = manual_control(dev);
+				write_to_file(params, size, interval, filename);
+			}
+		}
 	}
 }
 
-void manual_control(GAMEPAD_DEVICE dev)
+int manual_control(GAMEPAD_DEVICE dev)
 {
 	running = true;
 	signal(SIGINT, signal_handler);
@@ -39,7 +50,9 @@ void manual_control(GAMEPAD_DEVICE dev)
 	current_params.servo_angle = 0;
 
 	struct timespec ts1, ts2;
-	while (running) {
+	int i;
+
+	for (i = 0; running; i++) {
 		clock_gettime(CLOCK_MONOTONIC, &ts1);
 
 		GamepadUpdate();
@@ -64,25 +77,33 @@ void manual_control(GAMEPAD_DEVICE dev)
 
 		apply_params(current_params);
 
+		params[i].led_status = current_params.led_status;
+		params[i].motor_speed = current_params.motor_speed;
+		params[i].servo_angle = current_params.servo_angle;
+
 		clock_gettime(CLOCK_MONOTONIC, &ts2);
 		long delta = (ts2.tv_sec * 1000000000L + ts2.tv_nsec) - 
 			(ts1.tv_sec * 1000000000L + ts1.tv_nsec);
 
-		long interval = delay.tv_sec * 1000000000L + delay.tv_nsec;
-
-		if (interval > delta)
-			nanosleep(interval - delta, NULL); // TODO: timespec
+		if (interval > delta) {
+			ts1.tv_sec = 0;
+			ts1.tv_nsec = interval * 1000000L - delta;
+			nanosleep(&ts1, NULL); // TODO: timespec
+		}
 	}
+
+	return i;
 }
 
-void auto_control(struct auto_params_t* params) {
+void auto_control(struct auto_params_t* autoDef) {
 	struct timespec ts1, ts2;
 
 	int i;
-	for (i = 0; i < params->size; i++) {
+	for (i = 0; i < autoDef->n; i++) {
 		clock_gettime(CLOCK_MONOTONIC, &ts1);
 
-		apply_params(params[i]);
+		/* DOES THE MAGIC */
+		apply_params(autoDef->params[i]);
 
 		clock_gettime(CLOCK_MONOTONIC, &ts2);
 		long delta = (ts2.tv_sec * 1000000000L + ts2.tv_nsec) - 
@@ -90,8 +111,11 @@ void auto_control(struct auto_params_t* params) {
 
 		long interval = delay.tv_sec * 1000000000L + delay.tv_nsec;
 
-		if (interval > delta)
-			nanosleep(interval - delta, NULL); // TODO: timespec
+		if (interval > delta) {
+			ts1.tv_sec = 0;
+			ts1.tv_nsec = interval * 1000000L - delta;
+			nanosleep(&ts1, NULL); // TODO: timespec
+		}
 	}
 }
 
