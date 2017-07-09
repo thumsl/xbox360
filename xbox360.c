@@ -17,9 +17,11 @@ void failsafe(GAMEPAD_DEVICE dev)
     if (GamepadIsConnected(dev))
       if (GamepadButtonTriggered(dev, KILL_SWITCH))
 	if (operation == MANUAL)
-        	manual_control(dev); // TODO: find a better name 
-	else if (operation == ENCODED);
-		auto_control();
+    manual_control(dev); // TODO: find a better name 
+	else if (operation == ENCODED) {
+    // struct auto_params*;
+		auto_control(read_from_file(auto_params, "file.txt"), auto_params);
+  }
 
     nanosleep(&delay, NULL);
   }
@@ -30,7 +32,7 @@ void manual_control(GAMEPAD_DEVICE dev)
   running = true;
   signal(SIGINT, signal_handler);
 
-  struct control_params_t current_params;
+  static struct control_params_t current_params;
   
   current_params.led_status = 0;
   current_params.motor_speed = 0;
@@ -66,15 +68,15 @@ void manual_control(GAMEPAD_DEVICE dev)
 struct control_params_t* auto_control(char* filename) {
 }
 
-void apply_params()
+void apply_params(struct control_params_t P)
 {
-  PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, MOTOR_CENTER + params.motor_speed * MOTOR_MAX_OFFSET);
-  PCA9685_setDutyCicle(bus, SERVO_CHANNEL, SERVO_CENTER - params.servo_angle * SERVO_MAX_OFFSET);
-  PCA9685_setDutyCicle(bus, LED_CHANNEL, LED_MAX * params.led_status);
+  PCA9685_setDutyCicle(bus, MOTOR_CHANNEL, MOTOR_CENTER + P.motor_speed * MOTOR_MAX_OFFSET);
+  PCA9685_setDutyCicle(bus, SERVO_CHANNEL, SERVO_CENTER - P.servo_angle * SERVO_MAX_OFFSET);
+  PCA9685_setDutyCicle(bus, LED_CHANNEL, LED_MAX * P.led_status);
 
-  params.led_status == 0 ? printf("* LED OFF\n") : printf("* LED ON\n"); 
-  printf("* Motor PWM %f%\n", params.motor_speed * 100);
-  printf("* Servo PWM %f%\n", params.servo_angle * 100);
+  P.led_status == 0 ? printf("* LED OFF\n") : printf("* LED ON\n"); 
+  printf("* Motor PWM %f%\n", P.motor_speed * 100);
+  printf("* Servo PWM %f%\n", P.servo_angle * 100);
 }
 
 void save_params(char *file) {
