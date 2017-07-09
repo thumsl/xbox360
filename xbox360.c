@@ -1,5 +1,5 @@
 #include <signal.h>
-#include <bool.h>
+#include <stdbool.h>
 #include "xbox360.h"
 #include "stdio.h"
 
@@ -30,34 +30,36 @@ void manual_control(GAMEPAD_DEVICE dev)
   running = true;
   signal(SIGINT, signal_handler);
 
+  struct control_params_t current_params;
+
   while (running) {
     GamepadUpdate();
     if (GamepadIsConnected(dev)) {
       if (GamepadButtonTriggered(dev, LED_SWITCH)) {
-        if (params.led_status == 0)
-          params.led_status = 1;
+        if (current_params.led_status == 0)
+          current_params.led_status = 1;
         else
-          params.led_status = 0;
+          current_params.led_status = 0;
       }
 
-      params.motor_speed = 
+      current_params.motor_speed = 
         GamepadTriggerLength(dev, THROTTLE) - GamepadTriggerLength(dev, REVERSE);
       
       float y_val;
-      GamepadStickNormXY(dev, STEERING, &params.servo_angle, &y_val);
+      GamepadStickNormXY(dev, STEERING, &current_params.servo_angle, &y_val);
     }
     else {
-      params.motor_speed = 0;
-      params.servo_angle = 0;
+      current_params.motor_speed = 0;
+      current_params.servo_angle = 0;
     }
 
-    apply_params();
+    apply_params(current_params);
 
     nanosleep(&delay, NULL);
   }
 }
 
-void auto_control(char* filename) {
+struct control_params_t* auto_control(char* filename) {
 }
 
 void apply_params()
