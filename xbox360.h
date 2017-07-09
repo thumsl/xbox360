@@ -24,7 +24,7 @@
 
 #define I2C_BUS "/dev/i2c-1"
 
-#define USAGE_STRING "seu cretino, executou errado, porra!\n"
+#define USAGE_STRING "seu cretino, executou errado, porra!\n" // TODO: change
 
 struct control_params_t {
   int led_status;
@@ -40,6 +40,6 @@ struct timespec delay;
 void failsafe(GAMEPAD_DEVICE dev);
 void manual_control(GAMEPAD_DEVICE dev);
 struct control_params_t* load_params(char* filename);
-void auto_control(struct auto_params_t* params, int size); // TODO
+void auto_control(struct auto_params_t* params, int size); // TODO: update args on xbox360.c
 void apply_params();
 void save_params(char *file);
