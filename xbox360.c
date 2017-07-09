@@ -33,7 +33,7 @@ void manual_control(GAMEPAD_DEVICE dev)
   signal(SIGINT, signal_handler);
 
   static struct control_params_t current_params;
-  
+
   current_params.led_status = 0;
   current_params.motor_speed = 0;
   current_params.servo_angle = 0;
@@ -48,9 +48,9 @@ void manual_control(GAMEPAD_DEVICE dev)
           current_params.led_status = 0;
       }
 
-      current_params.motor_speed = 
+      current_params.motor_speed =
         GamepadTriggerLength(dev, THROTTLE) - GamepadTriggerLength(dev, REVERSE);
-      
+
       float y_val;
       GamepadStickNormXY(dev, STEERING, &current_params.servo_angle, &y_val);
     }
@@ -65,7 +65,7 @@ void manual_control(GAMEPAD_DEVICE dev)
   }
 }
 
-struct control_params_t* auto_control(char* filename) {
+void auto_control(struct auto_params_t* params, int size) {
 }
 
 void apply_params(struct control_params_t P)
@@ -80,5 +80,5 @@ void apply_params(struct control_params_t P)
 }
 
 void save_params(char *file) {
-	
+
 }
